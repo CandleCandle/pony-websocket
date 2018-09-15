@@ -12,7 +12,7 @@ interface WebSocketConnectionNotify
   fun ref binary_received(conn: WebSocketConnection ref, data: Array[U8 val] val): None =>
     None
 
-  fun ref connect_failed(conn: WebSocketConnection ref, reason: String) =>
+  fun ref connect_failed(conn: (WebSocketConnection ref | None), reason: String) =>
     None
 
   fun ref ping_sent(conn: WebSocketConnection ref, data: Array[U8] val) =>

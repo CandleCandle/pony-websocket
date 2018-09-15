@@ -20,9 +20,9 @@ class _TCPListenNotify is TCPListenNotify
     match ssl_context
     | let ctx: SSLContext =>
       let ssl = ctx.server()?
-      SSLConnection(_TCPConnectionNotify(consume n), consume ssl)
+      SSLConnection(_TCPConnectionNotify.server(consume n), consume ssl)
     else
-      _TCPConnectionNotify(consume n)
+      _TCPConnectionNotify.server(consume n)
     end
 
   fun ref not_listening(listen: TCPListener ref) =>
