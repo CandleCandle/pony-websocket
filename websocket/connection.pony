@@ -54,13 +54,14 @@ actor WebSocketConnection
   be close_be(code: U16 = 1000) =>
     close(code)
 
-  be _send_ping(data: Array[U8] val = []) =>
+  be send_ping(data: Array[U8] val = []) =>
     """
     Send a ping frame.
     """
     if not _closed then
       _tcp.writev(Frame.ping(data).build())
     end
+    _notify.ping_sent(this, data)
 
   be _send_pong(data: Array[U8] val) =>
     """
@@ -69,6 +70,7 @@ actor WebSocketConnection
     if not _closed then
       _tcp.writev(Frame.pong(data).build())
     end
+    _notify.pong_sent(this, data)
 
   be _close(code: U16 = 100) =>
     """
@@ -90,5 +92,13 @@ actor WebSocketConnection
   be _binary_received(data: Array[U8] val) =>
     _notify.binary_received(this, data)
 
+  be _ping_received(data: Array[U8] val) =>
+    _notify.ping_received(this, data)
+
+  be _pong_received(data: Array[U8] val) =>
+    _notify.pong_received(this, data)
+
   be _notify_closed() =>
     _notify.closed(this)
+
+// vi: sw=2 sts=2 ts=2 et
