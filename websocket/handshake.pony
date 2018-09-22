@@ -7,6 +7,8 @@ use "time"
 class HandshakeRequest
   var method: String = ""
   var resource: String = ""
+  var code: String = ""
+  var message: String = ""
   let headers: Map[String, String] = headers.create(32)
 
   new trn create() =>

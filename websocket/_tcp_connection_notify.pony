@@ -15,7 +15,7 @@ type Mode is (_Client | _Server)
 
 class _TCPConnectionNotify is TCPConnectionNotify
   var _notify: (WebSocketConnectionNotify iso | None)
-  var _http_parser: _HttpParser ref = _HttpParser
+  var _http_parser: _HttpParser ref
   let _buffer: Reader ref = Reader
   var _state: State = _Connecting
   var _frame_decoder: _FrameDecoder ref = _FrameDecoder
@@ -27,10 +27,12 @@ class _TCPConnectionNotify is TCPConnectionNotify
     _notify = consume notify
     _mode = _Client
     _request = consume request
+    _http_parser = _HttpParser.client()
 
   new iso server(notify: WebSocketConnectionNotify iso) =>
     _notify = consume notify
     _mode = _Server
+    _http_parser = _HttpParser.server()
 
   fun ref connected(conn: TCPConnection ref) =>
     match _request
