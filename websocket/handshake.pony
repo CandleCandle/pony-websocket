@@ -22,7 +22,7 @@ class HandshakeRequest
     headers("Connection") = "upgrade"
     headers("Upgrade") = "websocket"
     headers("Sec-WebSocket-Version") = "13"
-    headers("Sec-WebSocket-Key") = _RandomBase64(32)
+    headers("Sec-WebSocket-Key") = _RandomBase64(16)
 
   fun string(): String val =>
     let result = recover iso String end
