@@ -1,4 +1,6 @@
 use "net"
+use "time"
+use "random"
 
 actor WebSocketConnection
   """
@@ -9,8 +11,11 @@ actor WebSocketConnection
   let _tcp: TCPConnection
   var _closed: Bool = false
   let request: HandshakeRequest val
+//  let _random: Rand ref
+//  let _random: (None | Rand)
+  let _server: Bool
 
-  new create(
+  new client(
     tcp: TCPConnection,
     notify: WebSocketConnectionNotify iso,
     request': HandshakeRequest val)
@@ -18,14 +23,41 @@ actor WebSocketConnection
     _notify = consume notify
     _tcp = tcp
     request = request'
+//    (let s: I64, let n: I64) = Time.now()
+//    _random = Rand(s.u64(), n.u64()).>u128()
+    _server = false
     _notify.opened(this)
+
+  new server(
+    tcp: TCPConnection,
+    notify: WebSocketConnectionNotify iso,
+    request': HandshakeRequest val)
+  =>
+    _notify = consume notify
+    _tcp = tcp
+    request = request'
+//    _random = Rand(0, 0).>u128()
+    _server = true
+    //_random = None
+    _notify.opened(this)
+
+  fun _gen_masking_key(): (U32 | None) =>
+    if not _server then
+      (let s: I64, let n: I64) = Time.now()
+      Rand(s.u64(), n.u64()).>u128().u32()
+//      _random.u32()
+    else None end
+//    match _random
+//    | None => None
+//    | let r: Rand => r.u32()
+//    end
 
   fun send_text(text: String val) =>
     """
     Send text data (without fragmentation), text must be encoded in utf-8.
     """
     if not _closed then
-      _tcp.writev(Frame.text(text).build())
+      _tcp.writev(Frame.text(text, _gen_masking_key()).build())
     end
 
   be send_text_be(text: String val) =>
@@ -36,7 +68,7 @@ actor WebSocketConnection
     Send binary data (without fragmentation)
     """
     if not _closed then
-      _tcp.writev(Frame.binary(data).build())
+      _tcp.writev(Frame.binary(data, _gen_masking_key()).build())
     end
 
   be send_binary_be(data: Array[U8] val) =>
@@ -47,7 +79,7 @@ actor WebSocketConnection
     Initiate closure, all data sending is ignored after this call.
     """
     if not _closed then
-      _tcp.writev(Frame.close(code).build())
+      _tcp.writev(Frame.close(code, _gen_masking_key()).build())
       _closed = true
     end
 
@@ -59,7 +91,7 @@ actor WebSocketConnection
     Send a ping frame.
     """
     if not _closed then
-      _tcp.writev(Frame.ping(data).build())
+      _tcp.writev(Frame.ping(data, _gen_masking_key()).build())
     end
     _notify.ping_sent(this, data)
 
@@ -68,7 +100,7 @@ actor WebSocketConnection
     Send a pong frame.
     """
     if not _closed then
-      _tcp.writev(Frame.pong(data).build())
+      _tcp.writev(Frame.pong(data, _gen_masking_key()).build())
     end
     _notify.pong_sent(this, data)
 
@@ -81,7 +113,7 @@ actor WebSocketConnection
     close frame.
     """
     if not _closed then
-      _tcp.writev(Frame.close(code).build())
+      _tcp.writev(Frame.close(code, _gen_masking_key()).build())
       _closed = true
     end
     _tcp.dispose()

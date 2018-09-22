@@ -83,7 +83,10 @@ class _TCPConnectionNotify is TCPConnectionNotify
         // Create connection
         match (_notify = None, _connection)
         | (let n: WebSocketConnectionNotify iso, None) =>
-          _connection = WebSocketConnection(conn, consume n, req)
+          match _mode
+          | _Server => _connection = WebSocketConnection.server(conn, consume n, req)
+          | _Client => _connection = WebSocketConnection.client(conn, consume n, req)
+          end
         end
         conn.expect(2) // expect minimal header
       end

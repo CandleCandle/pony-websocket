@@ -181,7 +181,7 @@ class _FrameDecoder
     end
 
     // set state and return expect bytes
-    if (payload_len == 0) and (not masked) then
+    if (payload_len == 0) and (not masked) then // XXX masked payload and non-masked payload of length should result in the same Frame...
       state = _ExpectHeader
       return match opcode
       | Text => Frame.text("")
