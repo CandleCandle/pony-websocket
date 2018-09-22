@@ -1,12 +1,15 @@
 use "net"
 use "net/ssl"
 
-actor WebSocketClient
+primitive WebSocketClient
 
-  new create(auth: TCPConnectAuth, notify: WebSocketConnectionNotify iso, host: String, service: String, origin: String, method: String, resource: String, ssl_context: (SSLContext | None) = None) =>
+	fun apply(auth: TCPConnectAuth, notify: WebSocketConnectionNotify iso, host: String, service: String, origin: String, method: String, resource: String, ssl_context: (SSLContext | None) = None): TCPConnection ? =>
     TCPConnection.create(
       auth,
-      _TCPConnectionNotify.client(consume notify, HandshakeRequest.request(resource, host, origin, method)),
+      match ssl_context
+      | None => _TCPConnectionNotify.client(consume notify, HandshakeRequest.request(resource, host, origin, method))
+      | let ssl: SSLContext => SSLConnection(_TCPConnectionNotify.client(consume notify, HandshakeRequest.request(resource, host, origin, method)), ssl.client()?)
+      end,
       host,
       service
       )
